@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 )
 
@@ -31,6 +32,33 @@ func NewFileOrganizer(sourceDir string) (*FileOrganizer, error) {
 		rulesMap:       DefaultRules,
 		processedFiles: 0,
 	}, nil
+}
+
+func (fo *FileOrganizer) initLog() error {
+	file, err := os.OpenFile("organizer.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		return err
+	}
+
+	fo.logFile = file
+	log.SetOutput(file)
+	return nil
+}
+
+func (fo *FileOrganizer) logSuccess(message string) {
+	log.Println("[SUCCESS]", message)
+}
+
+func (fo *FileOrganizer) logError(message string) {
+	log.Println("[ERROR]", message)
+}
+
+func (fo *FileOrganizer) Close() error {
+	if fo.logFile == nil {
+		return nil
+	}
+
+	return fo.logFile.Close()
 }
 
 var DefaultRules = map[string]string{
