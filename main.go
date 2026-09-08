@@ -1,6 +1,37 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"os"
+)
+
+type FileOrganizer struct {
+	sourceDir      string
+	rulesMap       map[string]string
+	processedFiles int
+	logFile        *os.File
+}
+
+func NewFileOrganizer(sourceDir string) (*FileOrganizer, error) {
+	if len(sourceDir) == 0 {
+		return nil, fmt.Errorf("строка пути пустая")
+	}
+
+	info, err := os.Stat(sourceDir)
+	if err != nil {
+		return nil, fmt.Errorf("директория не найдена: %q", err)
+	}
+
+	if !info.IsDir() {
+		return nil, fmt.Errorf("указан путь до файла вместо директории: %q", sourceDir)
+	}
+
+	return &FileOrganizer{
+		sourceDir:      sourceDir,
+		rulesMap:       DefaultRules,
+		processedFiles: 0,
+	}, nil
+}
 
 var DefaultRules = map[string]string{
 	".jpg":  "Images",
@@ -19,7 +50,12 @@ var DefaultRules = map[string]string{
 }
 
 func main() {
-	for k, v := range DefaultRules {
-		fmt.Println("Расширение:", k, "->", "Папка:", v)
+	pathToDir := "./go.mod"
+	_, err := NewFileOrganizer(pathToDir)
+	if err != nil {
+		fmt.Println("Ошибка:", err)
+		return
 	}
+
+	fmt.Println("FileOrganizer: создан для директории:", pathToDir)
 }
