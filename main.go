@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -14,8 +15,10 @@ import (
 type FileOrganizer struct {
 	sourceDir      string
 	rulesMap       map[string]string
-	processedFiles int
 	logFile        *os.File
+	statistic      map[string]*FileStat
+	processedFiles int
+	totalSize      int64
 }
 
 func NewFileOrganizer(sourceDir string) (*FileOrganizer, error) {
@@ -36,6 +39,7 @@ func NewFileOrganizer(sourceDir string) (*FileOrganizer, error) {
 		sourceDir:      sourceDir,
 		rulesMap:       DefaultRules,
 		processedFiles: 0,
+		statistic:      make(map[string]*FileStat),
 	}, nil
 }
 
@@ -119,12 +123,57 @@ func (fo *FileOrganizer) Organize() error {
 			if err != nil {
 				return err
 			}
+			info, err := d.Info()
+			if err != nil {
+				return nil
+			}
+
+			fo.totalSize += info.Size()
 			fo.processedFiles++
+
+			if _, present := fo.statistic[folder]; !present {
+				fo.statistic[folder] = &FileStat{}
+			}
+			fo.statistic[folder].totalSize += info.Size()
+			fo.statistic[folder].files++
 		}
 		return nil
 	})
 
 	return err
+}
+
+func (fo *FileOrganizer) generateReport() string {
+	var res strings.Builder
+	res.WriteString("=== Отчет о перемещении файлов ===")
+	res.WriteString("\n\n")
+	res.WriteString("Всего обработано файлов: " + strconv.Itoa(fo.processedFiles) + "\n")
+	res.WriteString("Общий размер: " + convertBytes(fo.totalSize))
+	res.WriteString("\n\n")
+	res.WriteString("Статистика по категориям:")
+	for folder := range fo.statistic {
+		res.WriteString("\n\n" + folder + ":\n")
+		res.WriteString(fo.statistic[folder].String())
+	}
+	return res.String()
+}
+
+type FileStat struct {
+	files     int
+	totalSize int64
+}
+
+func (fs *FileStat) String() string {
+	res := "Файлов: " + strconv.Itoa(fs.files) + ", Размер: " + convertBytes(fs.totalSize)
+	return res
+}
+
+func convertBytes(bytes int64) string {
+	if bytes < 1000000 {
+		return fmt.Sprintf("%.2f KB", float64(bytes)/1000.0)
+	}
+
+	return fmt.Sprintf("%.2f MB", float64(bytes)/1000000.0)
 }
 
 var DefaultRules = map[string]string{
