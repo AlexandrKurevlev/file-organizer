@@ -1,7 +1,6 @@
 # Скомпилированные бинарники
 *.exe
 *.dll
-credit-card-validator
 
 # Папки IDE
 .idea/
@@ -9,3 +8,5 @@ credit-card-validator
 
 # macOS
 .DS_Store
+
+*.log
