@@ -103,7 +103,6 @@ func (fo *FileOrganizer) Organize() error {
 	if err != nil {
 		return err
 	}
-	defer fo.Close()
 
 	err = filepath.WalkDir(fo.sourceDir, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
@@ -210,6 +209,7 @@ func main() {
 		fmt.Println("Ошибка:", err)
 		return
 	}
+	defer fo.Close()
 
 	fmt.Println("Начинаем организацию файлов...")
 	err = fo.Organize()
