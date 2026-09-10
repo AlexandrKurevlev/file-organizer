@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -193,12 +194,31 @@ var DefaultRules = map[string]string{
 }
 
 func main() {
-	pathToDir := "./go.mod"
-	_, err := NewFileOrganizer(pathToDir)
+	fmt.Println("=== Файловый органайзер ===")
+	fmt.Print("Введите путь к директории для организации (Enter для текущей директории): ")
+
+	reader := bufio.NewReader(os.Stdin)
+	input, _ := reader.ReadString('\n')
+	sourcePath := strings.TrimSpace(input)
+
+	if len(sourcePath) == 0 {
+		sourcePath, _ = os.Getwd()
+	}
+
+	fo, err := NewFileOrganizer(sourcePath)
 	if err != nil {
 		fmt.Println("Ошибка:", err)
 		return
 	}
 
-	fmt.Println("FileOrganizer: создан для директории:", pathToDir)
+	fmt.Println("Начинаем организацию файлов...")
+	err = fo.Organize()
+	if err != nil {
+		fmt.Println("Ошибка:", err)
+		return
+	}
+
+	fmt.Println(fo.generateReport())
+
+	fmt.Println("Организация завершена! Подробности в файле organizer.log")
 }
